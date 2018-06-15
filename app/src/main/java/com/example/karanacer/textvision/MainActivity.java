@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
             //Create a file for photo to go
             File photoFile = null;
             try {
-                photoFile = createImageFile();
+                photoFile = createImageFile();  //creates a photo file and sets its directory
             }
             catch(IOException ex){
 
