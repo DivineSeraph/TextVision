@@ -1,6 +1,8 @@
 package com.example.karanacer.textvision;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -9,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +21,8 @@ import java.util.Date;
 public class MainActivity extends AppCompatActivity {
 
     Button mButton = null;
+    ImageView mImageView = null;
+    private Bitmap mImageBitmap = null;
     static final int REQUEST_IMAGE_CAPTURE = 1;
     String mCurrentPhotoPath;
 
@@ -30,7 +35,9 @@ public class MainActivity extends AppCompatActivity {
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 dispatchTakePictureIntent();
+
             }
         });
 
@@ -68,5 +75,37 @@ public class MainActivity extends AppCompatActivity {
         //Save a file: path for use with ACION_VIEW intents
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode,int resultCode,Intent data){
+        if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK)
+        {
+            //Scales and sets the image capture in dispatchTakePictureIntent() in imageView
+            setPic();
+        }
+    }
+
+    private void setPic(){
+        mImageView = (ImageView) findViewById(R.id.imageView);
+        //Get dimensions of the imageView in the app layout
+        int targetW = mImageView.getWidth();
+        int targetH = mImageView.getHeight();
+        //Get dimensions of image captured in dispatchTakePictureIntent()
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(mCurrentPhotoPath,bmOptions);
+        int photoW = bmOptions.outWidth;
+        int photoH = bmOptions.outHeight;
+        //scale image to match imageView layout
+        int scaleFactor = Math.min(photoH/targetH,photoW/targetW);
+
+        bmOptions.inJustDecodeBounds = false;
+        bmOptions.inSampleSize = scaleFactor;
+        bmOptions.inPurgeable = true;
+        //Set the decoded bitmap to imageView
+        Bitmap mBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath,bmOptions);
+        mImageView.setImageBitmap(mBitmap);
+
     }
 }
