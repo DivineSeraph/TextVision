@@ -13,3 +13,6 @@ STAGE 1: Develop a program to recognise and extract english characters from an i
 STAGE 2: Implement machine learning to improve recognition of the character set.
 STAGE 3: Expand character set to include symbols of all indian languages.
 STAGE 4: Implement google translate as the translation engine.
+
+IMPORTANT NOTE: Write permission has not been requested in runtime therefore to save text to file the 
+permission must be granted in app permissions by the user.

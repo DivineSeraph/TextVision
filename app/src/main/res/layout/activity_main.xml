@@ -20,7 +20,7 @@
         android:id="@+id/takePhoto"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="0.25"
+        android:layout_weight="0.225"
         android:text="Take a Photo" />
     <ScrollView
         android:layout_width="match_parent"
@@ -36,7 +36,7 @@
         android:id="@+id/saveToFile"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="0.2"
+        android:layout_weight="0.225"
         android:text="Save to Text File"
         android:clickable="false"/>
 
