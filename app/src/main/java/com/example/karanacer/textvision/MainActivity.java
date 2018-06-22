@@ -9,12 +9,24 @@ import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.method.Touch;
+import android.util.SparseArray;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.text.TextBlock;
+import com.google.android.gms.vision.text.TextRecognizer;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -22,7 +34,10 @@ public class MainActivity extends AppCompatActivity {
 
     Button mButton = null;
     ImageView mImageView = null;
-    private Bitmap mImageBitmap = null;
+    TextView mTextView = null;
+    String imageText = "";
+    Button mSaveButton = null;
+    //private Bitmap mImageBitmap = null;
     static final int REQUEST_IMAGE_CAPTURE = 1;
     String mCurrentPhotoPath;
 
@@ -32,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mButton = (Button)findViewById(R.id.takePhoto);
+        mSaveButton = (Button) findViewById(R.id.saveToFile);
+        mSaveButton.setEnabled(false);
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -41,6 +58,38 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mSaveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveToTextFile();
+            }
+        });
+
+    }
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        if(!isChangingConfigurations()){
+            File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            deleteTempFiles(storageDir);
+        }
+    }
+
+    private boolean deleteTempFiles(File file){
+        if(file.isDirectory()){
+            File[] files = file.listFiles();
+            if(files != null){
+                for(File f:files){
+                    if(f.isDirectory()){
+                        deleteTempFiles(f);
+                    }
+                    else{
+                        f.delete();
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     private void dispatchTakePictureIntent(){
@@ -53,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                 photoFile = createImageFile();  //creates a photo file and sets its directory
             }
             catch(IOException ex){
-
+                Toast.makeText(this, "Failed to create Image File", Toast.LENGTH_SHORT).show();
             }
             if(photoFile != null) {
                 Uri photoURI = FileProvider.getUriForFile(this,
@@ -83,6 +132,8 @@ public class MainActivity extends AppCompatActivity {
         {
             //Scales and sets the image capture in dispatchTakePictureIntent() in imageView
             setPic();
+            detectedText();
+            setTextOnScreen();
         }
     }
 
@@ -106,6 +157,72 @@ public class MainActivity extends AppCompatActivity {
         //Set the decoded bitmap to imageView
         Bitmap mBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath,bmOptions);
         mImageView.setImageBitmap(mBitmap);
+
+    }
+
+    private void detectedText(){
+        TextRecognizer textRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
+        try{
+            Bitmap mBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath);
+            if(textRecognizer.isOperational() && mBitmap != null) {
+                //Creates a frame to be sent to the Text Detector
+                Frame currentImage = new Frame.Builder()
+                        .setBitmap(mBitmap)
+                        .build();
+                //Text detected in image is stored in text blocks
+                SparseArray<TextBlock> textBlocks = textRecognizer.detect(currentImage);
+                if(textBlocks.size() != 0){
+                    for (int i = 0; i < textBlocks.size(); i++) {
+                        TextBlock temp = textBlocks.get(textBlocks.keyAt(i));
+                        //Text is stored line wise
+                        imageText += "\n" + temp.getValue();
+                    }
+                }
+                else{
+                    Toast.makeText(this,"No Text detected, works on printed black text with a white background",Toast.LENGTH_SHORT)
+                            .show();
+                }
+
+            }
+            else {
+                Toast.makeText(this,"Could not set up the detector!",Toast.LENGTH_SHORT)
+                        .show();
+            }
+        }
+        catch(Exception e){
+            Toast.makeText(this, "Failed to load Image", Toast.LENGTH_SHORT)
+                    .show();
+        }
+
+    }
+
+    private void setTextOnScreen(){
+        mTextView = (TextView) findViewById(R.id.textView);
+        //The detected text is displayed in the textview
+        mTextView.setText(imageText);
+        //Sets the save text button to be clickable
+        mSaveButton = (Button) findViewById(R.id.saveToFile);
+        mSaveButton.setEnabled(true);
+
+    }
+
+    private void saveToTextFile(){
+        //create an text file name
+        String textFileName = "imageText";
+        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        try{
+            String pathToFile = storageDir + "/" + textFileName +".txt";
+            File textFile = new File(pathToFile);
+            FileOutputStream fos = new FileOutputStream(textFile);
+            fos.write(imageText.getBytes());    //Write detected text in the image to the file
+            fos.close();
+            Toast.makeText(this,"Text successfully saved in "+ pathToFile,Toast.LENGTH_SHORT);
+            Toast.makeText(this,"File contents will be overwritten when new image is processed",Toast.LENGTH_SHORT);
+        }
+        catch(Exception e)
+        {
+            Toast.makeText(this, "Failed to create Text File", Toast.LENGTH_SHORT).show();
+        }
 
     }
 }

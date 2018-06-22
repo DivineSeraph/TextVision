@@ -22,13 +22,22 @@
         android:layout_height="0dp"
         android:layout_weight="0.25"
         android:text="Take a Photo" />
-
-    <TextView
-        android:id="@+id/textView"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:text="TextView" />
+        android:layout_weight="0.8">
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </ScrollView>
 
+    <Button
+        android:id="@+id/saveToFile"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.2"
+        android:text="Save to Text File"
+        android:clickable="false"/>
 
 </LinearLayout>
