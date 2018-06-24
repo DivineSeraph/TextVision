@@ -133,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(Intent.createChooser(selectPictureIntent,"Select Picture"),REQUEST_FOR_IMAGE);
 
     }
-    
+
 
     private File createImageFile() throws IOException{
         //create an image file name
