@@ -1,6 +1,7 @@
 package com.example.karanacer.textvision;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -24,11 +25,13 @@ import com.google.android.gms.vision.text.TextRecognizer;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.InputMismatchException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,8 +40,10 @@ public class MainActivity extends AppCompatActivity {
     TextView mTextView = null;
     String imageText = "";
     Button mSaveButton = null;
+    Button mSelectPhoto = null;
     //private Bitmap mImageBitmap = null;
     static final int REQUEST_IMAGE_CAPTURE = 1;
+    private static final int REQUEST_FOR_IMAGE = 123;
     String mCurrentPhotoPath;
 
     @Override
@@ -49,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         mButton = (Button)findViewById(R.id.takePhoto);
         mSaveButton = (Button) findViewById(R.id.saveToFile);
         mSaveButton.setEnabled(false);
+        mSelectPhoto = (Button)findViewById(R.id.selectPhoto);
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -62,6 +68,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 saveToTextFile();
+            }
+        });
+
+        mSelectPhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dispatchSelectImageIntent();
             }
         });
 
@@ -114,6 +127,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void dispatchSelectImageIntent(){
+        Intent selectPictureIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        selectPictureIntent.setType("image/*");
+        startActivityForResult(Intent.createChooser(selectPictureIntent,"Select Picture"),REQUEST_FOR_IMAGE);
+
+    }
+    
 
     private File createImageFile() throws IOException{
         //create an image file name
@@ -131,6 +151,40 @@ public class MainActivity extends AppCompatActivity {
         if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK)
         {
             //Scales and sets the image capture in dispatchTakePictureIntent() in imageView
+            setPic();
+            detectedText();
+            setTextOnScreen();
+        }
+        if(requestCode == REQUEST_FOR_IMAGE && resultCode == RESULT_OK){
+            //mCurrentPhotoPath = getPathFromUri(data.getData());
+            try{
+                InputStream inputStream = getApplicationContext().getContentResolver().openInputStream(data.getData());
+                File photoFile = createImageFile();
+                if(photoFile != null) {
+                    Uri photoURI = FileProvider.getUriForFile(this,
+                            "com.example.karanacer.textvision",
+                            photoFile);
+                    OutputStream outputStream = getContentResolver().openOutputStream(photoURI);
+                    try {
+                        // Transfer bytes from in to out
+                        byte[] buf = new byte[1024];
+                        int len;
+                        while ((len = inputStream.read(buf)) > 0) {
+                            outputStream.write(buf, 0, len);
+                        }
+                    }
+                    catch(Exception e){
+
+                    }
+                    finally {
+                        outputStream.close();
+                        inputStream.close();
+                    }
+                }
+            }
+            catch(Exception e){
+
+            }
             setPic();
             detectedText();
             setTextOnScreen();
